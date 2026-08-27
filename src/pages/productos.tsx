@@ -7,7 +7,6 @@ interface Producto {
     nombre: string;
     precio: number;
     precio_anterior: number | null;
-    categoria: string;
 }
 
 // ─── ICONOS ────────────────────────────────────────────────────────────
@@ -47,13 +46,6 @@ const ChevronRightIcon = () => (
     </svg>
 );
 
-const TagIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
-    </svg>
-);
-
 const HistoryIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -63,7 +55,6 @@ const HistoryIcon = () => (
 export default function Productos() {
 
     const [productos, setProductos] = useState<Producto[]>([]);
-    const [categorias, setCategorias] = useState<string[]>([]);
     const [busqueda, setBusqueda] = useState("");
     const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
     const [modoModal, setModoModal] = useState<"crear" | "editar" | "detalle" | null>(null);
@@ -75,7 +66,6 @@ export default function Productos() {
     const [form, setForm] = useState<Partial<Producto>>({
         nombre: "",
         precio: undefined,
-        categoria: "",
     });
 
     const searchRef = useRef<HTMLInputElement>(null);
@@ -101,16 +91,11 @@ export default function Productos() {
         }
 
         setProductos(data || []);
-        const cats = [...new Set(data?.map((p) => p.categoria) || [])];
-        setCategorias(cats);
     };
 
     const productosFiltrados = productos.filter((p) => {
         const q = busqueda.toLowerCase();
-        return (
-            p.nombre.toLowerCase().includes(q) ||
-            p.categoria.toLowerCase().includes(q)
-        );
+        return p.nombre.toLowerCase().includes(q);
     });
 
     // ── Abrir modal de DETALLE al hacer click en la card ──
@@ -121,13 +106,13 @@ export default function Productos() {
     };
 
     const abrirCrear = () => {
-        setForm({ nombre: "", precio: undefined, categoria: "" });
+        setForm({ nombre: "", precio: undefined });
         setModoModal("crear");
     };
 
     const abrirEditar = (p: Producto) => {
         setProductoSeleccionado(p);
-        setForm({ nombre: p.nombre, precio: p.precio, categoria: p.categoria });
+        setForm({ nombre: p.nombre, precio: p.precio });
         setModoModal("editar");
         setConfirmando(null);
     };
@@ -142,7 +127,6 @@ export default function Productos() {
     const guardarProducto = async () => {
         if (!form.nombre?.trim()) return mostrarToast("Ingresa el nombre", "error");
         if (!form.precio) return mostrarToast("Ingresa un precio", "error");
-        if (!form.categoria?.trim()) return mostrarToast("Ingresa una categoría", "error");
 
         if (modoModal === "crear") {
             const { data, error } = await supabase
@@ -150,7 +134,6 @@ export default function Productos() {
                 .insert({
                     nombre: form.nombre,
                     precio: form.precio,
-                    categoria: form.categoria,
                     precio_anterior: null,
                 })
                 .select()
@@ -174,7 +157,6 @@ export default function Productos() {
                 .update({
                     nombre: form.nombre,
                     precio: form.precio,
-                    categoria: form.categoria,
                     precio_anterior: nuevoPrecioAnterior,
                 })
                 .eq("id", productoSeleccionado.id);
@@ -188,7 +170,6 @@ export default function Productos() {
                             ...p,
                             nombre: form.nombre!,
                             precio: form.precio!,
-                            categoria: form.categoria!,
                             precio_anterior: nuevoPrecioAnterior ?? null,
                         }
                         : p
@@ -268,7 +249,7 @@ export default function Productos() {
                         type="text"
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        placeholder="Buscar por nombre o categoría... (Ctrl+K)"
+                        placeholder="Buscar por nombre... (Ctrl+K)"
                         className="flex-1 bg-transparent outline-none text-sm sm:text-base"
                     />
                     {busqueda && (
@@ -276,19 +257,6 @@ export default function Productos() {
                             <CloseIcon />
                         </button>
                     )}
-                </div>
-
-                {/* CATEGORIAS */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                    {categorias.map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setBusqueda(cat)}
-                            className="px-4 py-2 rounded-full bg-[#1a1f2d] border border-white/10 text-sm text-gray-300 hover:border-blue-500 hover:text-blue-400 transition"
-                        >
-                            {cat}
-                        </button>
-                    ))}
                 </div>
 
                 {/* GRID — cards limpias, solo nombre y precio */}
@@ -308,9 +276,9 @@ export default function Productos() {
                                     className="text-left bg-[#1a1f2d] border border-white/10 rounded-3xl p-5 hover:border-blue-500 transition-all duration-300 hover:-translate-y-1 group w-full"
                                 >
                                     <div className="flex items-start justify-between mb-4">
-                                        <p className="text-xs uppercase text-blue-400 tracking-wider">
-                                            {p.categoria}
-                                        </p>
+                                        <span className="text-xs text-blue-400 px-2.5 py-1 rounded-full border border-blue-400 font-medium flex items-center gap-1.5">
+                                            Mas Detalles
+                                        </span>
                                         <span className="text-gray-600 group-hover:text-blue-400 transition">
                                             <ChevronRightIcon />
                                         </span>
@@ -333,7 +301,7 @@ export default function Productos() {
                                                 ? "bg-red-500/15 text-red-400"
                                                 : "bg-green-500/15 text-green-400"
                                                 }`}>
-                                                {variacion.subio ? "▲" : "▼"} {Math.abs(variacion.pct)}%
+                                                {variacion.subio ? "▲ Subió" : "▼ Bajó"} {Math.abs(variacion.pct)}%
                                             </span>
                                         )}
                                     </div>
@@ -357,9 +325,6 @@ export default function Productos() {
                         {/* Cabecera */}
                         <div className="flex items-center justify-between p-6 border-b border-white/10">
                             <div>
-                                <p className="text-xs text-blue-400 uppercase tracking-wider mb-1">
-                                    {productoSeleccionado.categoria}
-                                </p>
                                 <h2 className="text-xl font-bold">{productoSeleccionado.nombre}</h2>
                             </div>
                             <button onClick={cerrarModal} className="text-gray-400 hover:text-white transition">
@@ -385,7 +350,7 @@ export default function Productos() {
                                             const v = variacionPrecio(productoSeleccionado)!;
                                             return (
                                                 <span className={`text-sm font-bold ${v.subio ? "text-red-400" : "text-green-400"}`}>
-                                                    {v.subio ? "▲ +" : "▼ "}
+                                                    {v.subio ? "▲ Subió " : "▼ Bajó "}
                                                     {v.diff.toFixed(2)} ({v.subio ? "+" : ""}{v.pct}%)
                                                 </span>
                                             );
@@ -408,17 +373,6 @@ export default function Productos() {
                                     </div>
                                 </div>
                             )}
-
-                            {/* Categoría */}
-                            <div className="bg-[#0f1117] border border-white/10 rounded-2xl p-4 flex items-center gap-3">
-                                <span className="text-blue-400">
-                                    <TagIcon />
-                                </span>
-                                <div>
-                                    <p className="text-xs text-gray-400 mb-0.5">Categoría</p>
-                                    <p className="text-sm font-semibold">{productoSeleccionado.categoria}</p>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Zona de acciones con confirmación */}
@@ -563,20 +517,6 @@ export default function Productos() {
                                         }))
                                     }
                                     placeholder="Ej: 15.50"
-                                    className="w-full bg-[#0f1117] border border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-blue-500 transition"
-                                />
-                            </div>
-
-                            {/* CATEGORIA */}
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-2">Categoría</label>
-                                <input
-                                    type="text"
-                                    value={form.categoria || ""}
-                                    onChange={(e) =>
-                                        setForm((prev) => ({ ...prev, categoria: e.target.value }))
-                                    }
-                                    placeholder="Ej: Bebidas"
                                     className="w-full bg-[#0f1117] border border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-blue-500 transition"
                                 />
                             </div>

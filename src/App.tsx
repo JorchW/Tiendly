@@ -123,17 +123,6 @@ function App() {
         <nav className="sticky top-0 z-50 bg-[#0f1117] border-b border-gray-800 shadow-lg">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
-              {/* Logo */}
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-600 p-2 rounded-xl">
-                  <Store size={22} className="text-white" />
-                </div>
-                <div>
-                  <h1 className="font-bold text-lg text-white">Sistema de Inventario</h1>
-                  <p className="text-xs text-gray-400">Gestión de productos y vencimientos</p>
-                </div>
-              </div>
-
               {/* Menú */}
               <div className="flex flex-wrap gap-2">
                 <NavLink to="/" end className={menuClass}>
