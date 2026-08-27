@@ -14,7 +14,6 @@ import {
 import {
   Package,
   CalendarClock,
-  Store,
   Lock
 } from 'lucide-react'
 
